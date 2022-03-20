@@ -1,0 +1,1 @@
+This is just me messing around with some "modern C" patterns and features from C11
