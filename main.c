@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* Structure Initialization */
@@ -65,12 +66,61 @@ file_contents_t read_file_contents(const char* data) {
   return result;
 }
 
+/* Dynamic arrays */
+#define dynarray(T) T*
+
+typedef struct dynarray_info {
+  size_t size;
+  size_t capacity;
+  size_t element_size;
+} dynarray_info;
+
+#define dynarray_init(T, size) (T*)dynarray_initf(sizeof(T), size)
+#define dynarray_add(arr, ...)   \
+  dynarray_ensure_capacity(arr); \
+  (*arr)[dynarray_size(*arr)] = __VA_ARGS__
+#define dynarray_get(arr, idx) (*arr)[dynarray_elem(*arr, idx)]
+
+void* dynarray_initf(size_t element_size, size_t size) {
+  dynarray_info* d = malloc(element_size * size + sizeof(dynarray_info));
+  d->capacity = size;
+  d->size = size;
+  d->element_size = element_size;
+  return d;
+}
+
+void dynarray_ensure_capacity(void* data) {
+  dynarray_info* d = (*(dynarray_info**)data);
+  if (d->capacity == 0) {
+    d->capacity = d->size;
+    d->size += d->size;
+    data = realloc(data, d->size);
+  }
+}
+
+size_t dynarray_size(void* data) {
+  dynarray_info* d = (dynarray_info*)data;
+  size_t result =
+      ((sizeof(dynarray_info) / d->element_size) + (d->size - d->capacity));
+  d->capacity--;
+  return result;
+}
+
+size_t dynarray_elem(void* data, size_t idx) {
+  dynarray_info* d = (dynarray_info*)data;
+  size_t result = sizeof(dynarray_info) / d->element_size;
+  if (idx < d->size) {
+    result += idx;
+  }
+  return result;
+}
+
 int main(int argc, char** argv) {
   static_assert(IS_FLOAT(some_constant.x), "Not a float, fix it");
 
   v2 v = {.x = 1.0f};  // or  v = (v2){.y = 2.0f};
-
   printf("Structure Initialization: v = {%f, %f}\n", v.x, v.y);
+
   printf("/-----------------------------------------------------------/\n");
   {
     printf("Testing macro structures initialized: some_constant(%f, %f)\n",
@@ -96,6 +146,7 @@ int main(int argc, char** argv) {
       printf("Awesome macro body\n");
     } */
   }
+
   printf("/-----------------------------------------------------------/\n");
   {
     const char* data = "Error Handling Example";
@@ -104,4 +155,10 @@ int main(int argc, char** argv) {
       printf("Yupp confirmed, data is invalid\n");
     }
   }
+
+  printf("/-----------------------------------------------------------/\n");
+  dynarray(int) array = dynarray_init(int, 2);
+  dynarray_add(&array, 99);
+
+  printf("Added value to dynamic array %d", dynarray_get(&array,0));
 }
