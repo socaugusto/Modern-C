@@ -1,3 +1,5 @@
+/* https://www.youtube.com/watch?v=QpAhX-gsHMs&t=2015s */
+
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>
